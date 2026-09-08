@@ -238,6 +238,28 @@ body::after {
   background: rgba(255,60,60,0.1); border: 1px solid rgba(255,60,60,0.25);
   color: #ff6060; cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap;
 }
+
+/* ── Rozcestník způsobů sdílení ── */
+.share-modes { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+               gap:14px; margin-bottom:26px; }
+.sm-card { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.09);
+           border-radius:14px; padding:18px 20px; }
+.sm-fam  { background:rgba(245,200,66,.06); border-color:rgba(245,200,66,.28); }
+.sm-head { font-family:'Unbounded',sans-serif; font-size:14px; font-weight:600;
+           color:#f0ece4; display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+.sm-ico  { font-size:20px; }
+.sm-txt  { font-size:13.5px; line-height:1.65; color:rgba(240,236,228,.72); margin:0 0 12px; }
+.sm-txt b { color:#f0ece4; }
+.sm-fam .sm-txt b { color:#f5c842; }
+.sm-tag  { display:inline-block; font-size:11.5px; padding:5px 11px; border-radius:20px;
+           background:rgba(255,255,255,.05); color:rgba(240,236,228,.55);
+           border:1px solid rgba(255,255,255,.09); }
+.sm-tag-gold { background:rgba(245,200,66,.1); color:#f5c842; border-color:rgba(245,200,66,.25); }
+.sm-btn  { display:inline-block; margin-top:14px; background:#f5c842; color:#1a1712;
+           font-size:13px; font-weight:600; padding:9px 16px; border-radius:9px;
+           text-decoration:none; }
+.sm-btn:hover { background:#ffe066; }
+
 .btn-cancel-share:hover { background: rgba(255,60,60,0.22); border-color: rgba(255,60,60,0.5); }
 
 /* ── Stav prohlédnutí ── */
@@ -360,6 +382,25 @@ body::after {
     <div class="page-header">
       <h1>Sdílet album</h1>
       <p>Pošli snapshot svého alba jinému uživateli — ten si pak může vybrat co chce a porovnat to s tebou.</p>
+    </div>
+
+    <!-- ROZCESTNÍK: jednorázové sdílení vs. rodina -->
+    <div class="share-modes">
+      <div class="sm-card">
+        <div class="sm-head"><span class="sm-ico">📤</span> Jednorázové sdílení</div>
+        <p class="sm-txt">Pošleš snapshot alba tak, jak vypadá teď. Příjemce si ho prohlédne
+           a porovná se svým. <b>Pozdější změny se nepromítnou</b> — je to fotka okamžiku.</p>
+        <div class="sm-tag">Hodí se na výměnu s cizím sběratelem</div>
+      </div>
+
+      <div class="sm-card sm-fam">
+        <div class="sm-head"><span class="sm-ico">👨‍👩‍👧‍👦</span> Sdílení s rodinou</div>
+        <p class="sm-txt">Členové rodiny vidí tvoje vybraná alba <b>trvale a živě</b> —
+           každá nová karta se jim objeví sama. <b>Sdílení nikdy nevyprší</b>,
+           neposílá se žádný odkaz a kdykoli ho můžeš vypnout.</p>
+        <div class="sm-tag sm-tag-gold">Hodí se pro děti, sourozence a partnera</div>
+        <a class="sm-btn" href="profile.html#familySection">Nastavit rodinu →</a>
+      </div>
     </div>
 
     <!-- PŘÍCHOZÍ POZVÁNKY -->

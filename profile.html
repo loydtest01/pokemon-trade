@@ -3595,6 +3595,28 @@ window.toggleTradeMatching = async function() {
 };
 </script>
 
+<script>
+/* Příchod s #familySection (odkaz ze stránky Sdílet album) — sekce se
+   načítá asynchronně, takže samotná kotva by nefungovala. Počkáme,
+   až se objeví, a teprve pak k ní odscrollujeme a zvýrazníme ji. */
+(function () {
+  if (location.hash !== '#familySection') return;
+  let pokusy = 0;
+  const timer = setInterval(function () {
+    const el = document.getElementById('familySection');
+    if (el && el.style.display !== 'none') {
+      clearInterval(timer);
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.style.transition = 'box-shadow .4s';
+      el.style.boxShadow  = '0 0 0 2px rgba(245,200,66,.55)';
+      setTimeout(function () { el.style.boxShadow = ''; }, 2200);
+    } else if (++pokusy > 40) {
+      clearInterval(timer);   // ~8 s a dost
+    }
+  }, 200);
+})();
+</script>
+
 <!-- ═══ RODINA JS ═══ -->
 <script>
 (function () {
