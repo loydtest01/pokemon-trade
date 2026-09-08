@@ -1268,7 +1268,7 @@ function escapeHtml(s) {
 // Vyžaduje SQL funkci admin_user_overview() (viz admin_user_overview.sql)
 // ══════════════════════════════════════════════════════════════════════════
 let _usersData = [];
-let _usersSort = { key: 'registrace', dir: -1 };
+let _usersSort = { key: 'registrace', dir: -1 };   // klíče: viz admin_user_overview()
 
 async function loadUsers() {
   const cont = document.getElementById('usersTable');
@@ -1334,7 +1334,8 @@ function renderUsers() {
     th('🏷 K prodeji', 'k_prodeji', 'Aktivní + rezervované inzeráty') +
     th('💰 Prodal', 'prodano') +
     th('🛒 Koupil', 'koupeno') +
-    th('Naposledy', 'posledni_aktivita') +
+    th('📤 Nahrál', 'posledni_nahrani', 'Poslední fotka, inzerát nebo transakce') +
+    th('🔑 Přihlášení', 'posledni_prihlaseni', 'Poslední úspěšné přihlášení') +
     '<th>Stav</th></tr></thead><tbody>';
 
   rows.forEach(u => {
@@ -1350,7 +1351,9 @@ function renderUsers() {
       ${num(u.k_prodeji, true)}
       <td style="text-align:right">${Number(u.prodano || 0)}${Number(u.prodano_czk) > 0 ? `<div style="font-size:10.5px;color:var(--muted)">${Number(u.prodano_czk).toLocaleString('cs')} Kč</div>` : ''}</td>
       <td style="text-align:right">${Number(u.koupeno || 0)}${Number(u.koupeno_czk) > 0 ? `<div style="font-size:10.5px;color:var(--muted)">${Number(u.koupeno_czk).toLocaleString('cs')} Kč</div>` : ''}</td>
-      <td style="white-space:nowrap;font-size:12px">${dt(u.posledni_aktivita)}</td>
+      <td style="white-space:nowrap;font-size:12px">${dt(u.posledni_nahrani)}</td>
+      <td style="white-space:nowrap;font-size:12px">${dt(u.posledni_prihlaseni)}
+          ${Number(u.prihlaseni_celkem) > 0 ? `<div style="font-size:10.5px;color:var(--muted)">${u.prihlaseni_celkem}×</div>` : ''}</td>
       <td>${u.je_banned ? '<span class="badge badge-high">BAN</span>'
             : u.je_vip ? '<span class="badge badge-vip">VIP</span>'
             : '<span class="badge badge-ok">OK</span>'}</td>
@@ -1364,7 +1367,7 @@ function exportUsersCsv() {
   if (!_usersData.length) return;
   const cols = ['username','email','registrace','fotek_nahranych','fotek_ceka',
                 'karet_v_albu','k_prodeji','prodano','prodano_czk','koupeno',
-                'koupeno_czk','posledni_aktivita'];
+                'koupeno_czk','posledni_nahrani','posledni_prihlaseni','prihlaseni_celkem'];
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const csv = [cols.join(';')]
     .concat(_usersData.map(u => cols.map(c => esc(u[c])).join(';')))

@@ -202,7 +202,7 @@
   }
 
   /* ── Přepínání stavu ────────────────────────────────────── */
-  function setState(next) {
+  let setState = function (next) {
     state = next;
     localStorage.setItem(LS_STATE, next);
     root.classList.add('qrb-hidden');
@@ -210,7 +210,7 @@
       if (next === 'min') renderMinimized(); else renderOpen();
       root.classList.remove('qrb-hidden');
     }, 160);
-  }
+  };
 
   /* Veřejné API – např. pro tlačítko "Skrýt napořád" v Nastavení */
   window.qrBridge = {
@@ -219,6 +219,46 @@
     state: function () { return state; }
   };
 
+  /* ── Vyhýbání se jiným plovoucím tlačítkům ──────────────────
+     Některé stránky mají vpravo dole vlastní prvek (na profilu je to
+     tlačítko zpětné vazby #fbBtn). Panel se s ním překrýval. Místo
+     natvrdo napsaného odsazení si spočítáme, co tam už je, a sedneme
+     si nad to — funguje to i na stránkách, které přibudou později. */
+  function posunNadOstatni() {
+    if (!root) return;
+    root.style.bottom = '18px';                       // výchozí pozice
+    const vh = window.innerHeight, vw = window.innerWidth;
+    let nejvyssiOkraj = vh;
+
+    document.querySelectorAll('body *').forEach(el => {
+      if (el === root || root.contains(el)) return;
+      const st = getComputedStyle(el);
+      if (st.position !== 'fixed' || st.display === 'none' || st.visibility === 'hidden') return;
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      // Zajímá nás jen pravý dolní roh
+      if (r.right < vw - 160 || r.bottom < vh - 160) return;
+      if (r.width > vw * 0.6) return;                 // ne celoobrazovkové vrstvy
+      if (r.top < nejvyssiOkraj) nejvyssiOkraj = r.top;
+    });
+
+    if (nejvyssiOkraj < vh) {
+      root.style.bottom = Math.round(vh - nejvyssiOkraj + 14) + 'px';
+    }
+  }
+
   /* ── Start ──────────────────────────────────────────────── */
   if (state === 'min') renderMinimized(); else renderOpen();
+
+  // Po vykreslení a při změně velikosti okna přepočítej pozici
+  setTimeout(posunNadOstatni, 300);
+  setTimeout(posunNadOstatni, 1500);   // pro tlačítka, co doskočí později
+  window.addEventListener('resize', posunNadOstatni);
+
+  // Přepočítej i po vlastní změně stavu
+  const _puvodniSetState = setState;
+  setState = function (next) {
+    _puvodniSetState(next);
+    setTimeout(posunNadOstatni, 200);
+  };
 })();

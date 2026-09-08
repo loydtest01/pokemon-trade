@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Příručka – PokéTrade</title>
+<link rel="icon" href="pokemon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg,#0b0b12); color:var(--text); margin:0; }
+
+  /* ── Global topbar (záloha než topbar.js injektuje styly) ── */
+  .app-topbar {
+    position:sticky; top:0; z-index:200;
+    background:rgba(8,8,12,0.92);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    backdrop-filter:blur(16px);
+    display:flex; align-items:center; height:56px; padding:0 20px;
+  }
+  .app-logo {
+    font-size:14px; font-weight:800; color:#fff; display:flex; align-items:center;
+    gap:6px; text-decoration:none; margin-right:28px; white-space:nowrap; flex-shrink:0;
+  }
+  .app-logo strong { color:#f5c842; }
+  .topbar-right { display:flex; align-items:center; gap:10px; margin-left:auto; }
+  .nav-lnks img.nav-icon { width:18px!important; height:18px!important; object-fit:contain!important; }
+
+  .pr-wrap { max-width:900px; margin:0 auto; padding:28px 16px 90px; }
+  .pr-head h1 { font-size:27px; font-weight:800; margin:0 0 6px; }
+  .pr-head h1 em { color:#f5c842; font-style:normal; }
+  .pr-head p  { color:var(--text2); font-size:14.5px; margin:0 0 22px; line-height:1.6; }
+
+  /* Hledání */
+  .pr-search { position:sticky; top:56px; z-index:50; background:var(--bg,#0b0b12);
+               padding:12px 0 14px; margin-bottom:4px; }
+  .pr-search input {
+    width:100%; box-sizing:border-box; padding:13px 16px 13px 42px;
+    border-radius:11px; border:1px solid var(--border);
+    background:rgba(255,255,255,.05); color:var(--text);
+    font-size:15px; font-family:inherit; outline:none;
+  }
+  .pr-search input:focus { border-color:rgba(245,200,66,.5); }
+  .pr-search .ico { position:absolute; margin:13px 0 0 14px; font-size:15px; pointer-events:none; }
+  .pr-hits { font-size:12.5px; color:var(--text2); margin-top:8px; min-height:16px; }
+
+  /* Rychlé odkazy */
+  .pr-quick { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+  .pr-quick a {
+    font-size:12.5px; padding:7px 13px; border-radius:20px;
+    background:rgba(255,255,255,.05); border:1px solid var(--border);
+    color:var(--text2); text-decoration:none;
+  }
+  .pr-quick a:hover { border-color:rgba(245,200,66,.45); color:#f5c842; }
+
+  /* Sekce */
+  .pr-sec { border:1px solid var(--border); border-radius:13px;
+            margin-bottom:11px; overflow:hidden; background:rgba(255,255,255,.02); }
+  .pr-sec > summary {
+    padding:15px 18px; cursor:pointer; font-size:15.5px; font-weight:700;
+    display:flex; align-items:center; gap:10px; list-style:none; color:var(--text);
+  }
+  .pr-sec > summary::-webkit-details-marker { display:none; }
+  .pr-sec > summary::after { content:'▾'; margin-left:auto; color:var(--text3); font-size:13px; }
+  .pr-sec[open] > summary::after { content:'▴'; }
+  .pr-sec > summary:hover { background:rgba(255,255,255,.03); }
+  .pr-body { padding:2px 18px 18px; font-size:14px; line-height:1.7; color:var(--text2); }
+  .pr-body h4 { color:var(--text); font-size:14px; margin:18px 0 7px; font-weight:700; }
+  .pr-body p  { margin:0 0 11px; }
+  .pr-body ol, .pr-body ul { margin:0 0 12px; padding-left:22px; }
+  .pr-body li { margin-bottom:6px; }
+  .pr-body a { color:#f5c842; }
+  .pr-body code {
+    background:rgba(255,255,255,.07); padding:1.5px 6px; border-radius:5px;
+    font-size:12.5px; font-family:ui-monospace,monospace; color:var(--text);
+  }
+  .pr-tip {
+    background:rgba(245,200,66,.07); border:1px solid rgba(245,200,66,.2);
+    border-radius:10px; padding:11px 14px; margin:13px 0; font-size:13.5px;
+  }
+  .pr-tip b { color:#f5c842; }
+  .pr-warn {
+    background:rgba(248,113,113,.07); border:1px solid rgba(248,113,113,.22);
+    border-radius:10px; padding:11px 14px; margin:13px 0; font-size:13.5px;
+  }
+  .pr-warn b { color:#f87171; }
+  mark { background:rgba(245,200,66,.32); color:inherit; border-radius:3px; padding:0 2px; }
+
+  /* Odkaz na konkrétní funkci přímo v textu */
+  a.fx {
+    color:#f5c842; text-decoration:none; font-weight:700;
+    border-bottom:1px dashed rgba(245,200,66,.45); padding-bottom:1px;
+    white-space:nowrap;
+  }
+  a.fx:hover { border-bottom-style:solid; }
+  a.fx::after { content:'↗'; font-size:10px; margin-left:2px; opacity:.65; vertical-align:super; }
+
+  /* Řádek s tlačítky na konci sekce */
+  .pr-actions {
+    display:flex; gap:8px; flex-wrap:wrap;
+    margin-top:16px; padding-top:14px; border-top:1px solid var(--border);
+  }
+  .pr-actions a {
+    font-size:13px; font-weight:600; padding:9px 15px; border-radius:9px;
+    background:#f5c842; color:#1a1712; text-decoration:none; white-space:nowrap;
+  }
+  .pr-actions a.ghost {
+    background:transparent; color:var(--text2);
+    border:1px solid var(--border);
+  }
+  .pr-actions a.ghost:hover { color:#f5c842; border-color:rgba(245,200,66,.45); }
+  .pr-empty { text-align:center; padding:44px 16px; color:var(--text3); font-size:14px; }
+</style>
+</head>
+<body>
+
+<script>window.TOPBAR_ACTIVE = '';</script>
+<script src="i18n.js"></script>
+<script src="topbar.js"></script>
+
+<!-- ── Topbar (globální navigace) ─────────────────────────── -->
+<header class="app-topbar">
+  <a href="/" class="app-logo">
+    <img src="pokemon.png" alt="" style="width:28px;height:28px;object-fit:contain;border-radius:6px"> Poké<strong>Trade</strong>
+  </a>
+  <nav class="nav-lnks" id="mainNav"></nav>
+  <div class="topbar-right"></div>
+</header>
+
+<div class="pr-wrap">
+
+  <div class="pr-head">
+    <h1>📖 <em>Příručka</em></h1>
+    <p>Jak PokéTrade funguje, co kde najdeš a jak si poradit, když se něco nedaří.
+       Piš do vyhledávání — filtruje se rovnou při psaní.</p>
+  </div>
+
+  <div class="pr-search">
+    <span class="ico">🔍</span>
+    <input id="prSearch" type="search" placeholder="Hledej: skener, cena, výměna, QR, VIP, album…"
+           oninput="prFilter(this.value)" autocomplete="off">
+    <div class="pr-hits" id="prHits"></div>
+  </div>
+
+  <div class="pr-quick" id="prQuick">
+    <a href="#" onclick="prFilterFrom('skenování');return false">Skenování karet</a>
+    <a href="#" onclick="prFilterFrom('album');return false">Alba</a>
+    <a href="#" onclick="prFilterFrom('prodej');return false">Prodej a výměna</a>
+    <a href="#" onclick="prFilterFrom('cena');return false">Ceny</a>
+    <a href="#" onclick="prFilterFrom('VIP');return false">VIP</a>
+    <a href="#" onclick="prFilterFrom('problém');return false">Řešení potíží</a>
+  </div>
+
+  <div id="prSections">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec" open>
+    <summary>🚀 Začínáme — první karta za dvě minuty</summary>
+    <div class="pr-body">
+      <p>PokéTrade je místo, kde si vedeš sbírku Pokémon karet, sleduješ její hodnotu
+         a můžeš karty nabídnout ostatním k prodeji nebo výměně.</p>
+
+      <h4>Nejrychlejší start</h4>
+      <ol>
+        <li>Klikni v horní liště na <a class="fx" href="queue.html?tab=bulk">Naskenovat kartu</a>.</li>
+        <li>Vyfoť kartu telefonem nebo nahraj fotku z počítače.</li>
+        <li>AI z fotky sama pozná jméno, sérii, číslo i aktuální cenu.</li>
+        <li>Zkontroluj, co našla, a ulož do alba.</li>
+      </ol>
+
+      <div class="pr-tip">
+        <b>Nemusíš nic vypisovat ručně.</b> Stačí fotka. Když si AI není jistá,
+        nabídne víc možností a ty vybereš správnou.
+      </div>
+
+      <h4>Co znamenají položky v horní liště</h4>
+      <ul>
+        <li><a class="fx" href="marketplace.html">Obchod</a> — nabídky ostatních sběratelů, prodej i výměna</li>
+        <li><a class="fx" href="moje-album.html">Moje alba</a> — tvoje sbírka, rozdělená do alb</li>
+        <li><a class="fx" href="queue.html?tab=bulk">Naskenovat kartu</a> — přidání nových karet</li>
+        <li><a class="fx" href="compare.html">Porovnat alba</a> — co ti chybí proti kamarádovi</li>
+        <li><a class="fx" href="share-album.html">Sdílet album</a> — ukázat sbírku ostatním odkazem</li>
+        <li><a class="fx" href="queue.html">Čeká na zařazení</a> — fotky, které ještě nemají přiřazenou kartu</li>
+        <li><a class="fx" href="deck-builder.html">Deck Builder</a> — stavba hracího decku</li>
+        <li><a class="fx" href="statistiky.html">Statistiky</a> — hodnota sbírky v čase</li>
+        <li><a class="fx" href="pokedb.html">PokéDB</a> — databáze všech karet, i těch, které nemáš</li>
+      </ul>
+      <div class="pr-actions">
+        <a href="queue.html?tab=bulk">📸 Naskenovat první kartu</a>
+        <a class="ghost" href="moje-album.html">Otevřít moje alba</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>📸 Skenování karet — tři způsoby</summary>
+    <div class="pr-body">
+      <h4>1. Z počítače</h4>
+      <p><a class="fx" href="queue.html?tab=bulk">Naskenovat kartu</a> → přetáhni fotky nebo vyber soubory. Zvládne jich víc naráz.</p>
+
+      <h4>2. Z mobilu přes QR kód</h4>
+      <p>Vpravo dole je panel <a class="fx" href="queue.html?tab=qr">Nahrát z mobilu</a>. Naskenuj kód telefonem a otevře se ti
+         mobilní verze. Vyfotíš kartu a ona se objeví na počítači ve frontě.
+         Panel jde sbalit na malou bublinu — pamatuje si to.</p>
+
+      <h4>3. Hromadný sken</h4>
+      <p>Máš celou stránku v albu nebo krabici? V sekci skenování je záložka
+         <a class="fx" href="queue.html?tab=bulk">Bulk Scan</a>, která zvládne víc karet v jednom průchodu.</p>
+
+      <h4>Jak dobře vyfotit</h4>
+      <ul>
+        <li>Tmavý podklad, karta celá v záběru</li>
+        <li>Bez odlesku na fólii — nejlépe od okna, ne přímo pod lampou</li>
+        <li>Čitelné číslo v dolním rohu (např. <code>012/100</code>) — podle něj se karta hledá</li>
+      </ul>
+
+      <div class="pr-tip">
+        <b>Fotky z mobilu se nikam neztratí.</b> Přijdou do sekce
+        <a class="fx" href="queue.html">Čeká na zařazení</a>, kde je v klidu doplníš a rozřadíš do alb.
+      </div>
+      <div class="pr-actions">
+        <a href="queue.html?tab=bulk">📸 Skenovat z počítače</a>
+        <a class="ghost" href="queue.html?tab=qr">📱 QR pro mobil</a>
+        <a class="ghost" href="queue.html">Fronta ke zpracování</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>🗂 Alba — jak si sbírku uspořádat</summary>
+    <div class="pr-body">
+      <p>Každý má <b>Hlavní album</b>, do kterého padají nové karty. Můžeš si založit
+         další — podle série, podle typu, jak ti to vyhovuje.</p>
+
+      <h4>Počet kusů</h4>
+      <p>Máš-li stejnou kartu víckrát, nemusíš ji skenovat opakovaně. V detailu karty
+         nastav počet kusů. Statistiky i Deck Builder s tím pak počítají.</p>
+
+      <h4>Porovnání alb</h4>
+      <p><a class="fx" href="compare.html">Porovnat alba</a> ukáže, které karty má kamarád a ty ne — a naopak.
+         Praktické před výměnou.</p>
+
+      <h4>Sdílení</h4>
+      <p><a class="fx" href="share-album.html">Sdílet album</a> vytvoří odkaz, který můžeš poslat komukoli. Nemusí mít účet.
+         Sdílení jde kdykoli vypnout.</p>
+      <div class="pr-actions">
+        <a href="moje-album.html">🗂 Otevřít moje alba</a>
+        <a class="ghost" href="compare.html">Porovnat s kamarádem</a>
+        <a class="ghost" href="share-album.html">Sdílet album</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>💰 Obchod — prodej a výměna</summary>
+    <div class="pr-body">
+      <h4>Vytvoření nabídky</h4>
+      <ol>
+        <li>V <a class="fx" href="marketplace.html">Obchodě</a> klikni na novou nabídku.</li>
+        <li>Vyber kartu ze svého alba, nebo ji najdi podle jména.</li>
+        <li>Zvol <b>Prodej</b>, <b>Výměna</b>, nebo obojí.</li>
+        <li>Nastav cenu, stav karty a připoj vlastní fotky.</li>
+      </ol>
+
+      <div class="pr-tip">
+        <b>Přidej reálné fotky.</b> Kupující chce vidět, jak karta skutečně vypadá —
+        nabídky s vlastními fotkami mají mnohem větší šanci.
+      </div>
+
+      <h4>Doručení</h4>
+      <p>U nabídky vybíráš, kterými přepravci posíláš — Zásilkovna, Balíkovna,
+         Česká pošta, PPL, DPD, GLS, AlzaBox, WEDO. Můžeš označit i osobní předání
+         a jestli posíláš do zahraničí.</p>
+
+      <h4>Stav karty</h4>
+      <p>Používá se běžná stupnice: <code>NM</code> (jako nová), <code>EX</code>,
+         <code>GD</code>, <code>LP</code>, <code>PL</code>, <code>PO</code> (hodně opotřebená).
+         Buď raději přísnější — spokojený kupující se vrátí.</p>
+
+      <h4>Domluva</h4>
+      <p>Vše ostatní si domluvíte v chatu přímo v aplikaci. Dobírka je férový kompromis:
+         kupující platí až při převzetí, prodávající má jistotu platby.</p>
+
+      <div class="pr-warn">
+        <b>PokéTrade není prostředník.</b> Neuchováváme platby ani neručíme za průběh
+        obchodu. Domlouváte se přímo mezi sebou — u dražších karet zvaž pojištěnou
+        zásilku a foť balení před odesláním.
+      </div>
+      <div class="pr-actions">
+        <a href="marketplace.html">💰 Otevřít obchod</a>
+        <a class="ghost" href="transactions.html">Moje transakce</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>📊 Ceny a statistiky</summary>
+    <div class="pr-body">
+      <h4>Odkud se berou ceny</h4>
+      <p>Ceny pocházejí z Cardmarketu a TCGplayeru. Používá se hodnota
+         <b>pTrend</b> — cenový trend, ne nejnižší nabídka. Je to realističtější
+         odhad toho, za kolik se karta skutečně prodává.</p>
+
+      <h4>Statistiky sbírky</h4>
+      <ul>
+        <li><b>Hodnota v čase</b> — jak sbírka rostla podle data přidání karet</li>
+        <li><b>Přidané karty</b> — kolik karet přibylo v jednotlivých obdobích</li>
+        <li><b>Typy Pokémonů</b> — rozložení tvé sbírky</li>
+      </ul>
+
+      <h4>Měna</h4>
+      <p>V <a class="fx" href="nastaveni.html">Nastavení</a> si přepneš eura na koruny. Ceny z API chodí v eurech,
+         přepočet na koruny se dělá aktuálním kurzem.</p>
+
+      <div class="pr-tip">
+        <b>Hodnota je odhad, ne cenovka.</b> Skutečná prodejní cena závisí na stavu,
+        edici a poptávce. Ber to jako orientační číslo.
+      </div>
+
+      <h4>Hlídání cen</h4>
+      <p>U karty, kterou chceš koupit, si nastav hlídání. Dáme ti vědět,
+         až se objeví v obchodě nebo klesne cena.</p>
+      <div class="pr-actions">
+        <a href="statistiky.html">📊 Statistiky sbírky</a>
+        <a class="ghost" href="hlidane-karty.html">⭐ Hlídané karty</a>
+        <a class="ghost" href="price-finder.html">Hledač cen</a>
+        <a class="ghost" href="nastaveni.html">Přepnout měnu</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>🃏 Deck Builder — stavba hracího decku</summary>
+    <div class="pr-body">
+      <p>Nástroj pro sestavení šedesátikaretního decku podle pravidel Pokémon TCG.</p>
+
+      <h4>Záložky</h4>
+      <ul>
+        <li><b>Hotové decky</b> — připravené archetypy, které stačí použít</li>
+        <li><b>AI Builder</b> — popíšeš, co chceš, a AI navrhne celý deck</li>
+        <li><b>Manuální</b> — poskládáš si ho sám kartu po kartě</li>
+        <li><b>Export / Tisk</b> — seznam ve formátu pro turnaje</li>
+        <li><b>Chat s AI</b> — zeptáš se na konkrétní kombinaci nebo strategii</li>
+      </ul>
+
+      <h4>Jen karty z mé sbírky</h4>
+      <p>Když zaškrtneš tuhle volbu, AI použije <b>výhradně</b> karty, které opravdu máš,
+         a nepřekročí počet kusů. Nejdřív klikni na <b>Načíst moje karty</b>.
+         Základní energie smí použít vždycky — ty se shánět nemusí.</p>
+
+      <div class="pr-tip">
+        <b>Máš málo karet?</b> AI postaví nejlepší možné z toho, co je k dispozici,
+        a do shrnutí napíše, které klíčové karty ti chybí. Máš tak rovnou nákupní seznam.
+      </div>
+      <div class="pr-actions">
+        <a href="deck-builder.html">🃏 Otevřít Deck Builder</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>🗃 PokéDB — databáze karet</summary>
+    <div class="pr-body">
+      <p>Kompletní databáze karet z celé historie Pokémon TCG — i těch, které nemáš.
+         Přes sto tisíc karet, tisíce sérií, osm jazyků.</p>
+
+      <h4>K čemu je</h4>
+      <ul>
+        <li>Zjistit, jak karta vypadá a co umí, než ji koupíš</li>
+        <li>Projít celou sérii a zjistit, co ti do ní chybí</li>
+        <li>Najít japonskou nebo německou verzi karty</li>
+        <li>Podívat se na cenu bez zakládání nabídky</li>
+      </ul>
+
+      <h4>Hledání</h4>
+      <p>Podle jména (česky i anglicky), čísla karty, série, typu energie nebo vzácnosti.
+         Filtry jdou kombinovat.</p>
+      <div class="pr-actions">
+        <a href="pokedb.html">🗃 Prohledat PokéDB</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>⭐ VIP — co to je a jak ho získat</summary>
+    <div class="pr-body">
+      <p>VIP zvyšuje denní limity AI rozpoznávání. Bez něj funguje všechno taky,
+         jen s nižším počtem skenů za den.</p>
+
+      <h4>Jak se VIP získává</h4>
+      <ul>
+        <li><b>Prvních 10 registrovaných</b> — VIP natrvalo</li>
+        <li><b>Prvních 100 registrovaných</b> — VIP na 30 dní</li>
+        <li><b>Ostatní</b> — VIP na 14 dní po registraci</li>
+        <li><b>Pozvání kamaráda</b> — prodloužení za každého, kdo se přes tvůj odkaz zaregistruje</li>
+      </ul>
+
+      <h4>Vlastní AI klíč</h4>
+      <p>V <a class="fx" href="nastaveni.html">Nastavení</a> si můžeš vložit vlastní klíč (Groq, Gemini a další).
+         Pak skenuješ bez našich limitů. Klíče bývají zdarma.</p>
+      <div class="pr-actions">
+        <a href="nastaveni.html">⚙️ Přidat vlastní klíč</a>
+        <a class="ghost" href="profile.html">Můj profil a pozvánky</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>⚙️ Nastavení — co si můžeš přizpůsobit</summary>
+    <div class="pr-body">
+      <ul>
+        <li><b>Měna</b> — eura nebo koruny</li>
+        <li><b>Jazyk</b> — čeština nebo angličtina</li>
+        <li><b>Vlastní AI klíč</b> — skenování bez limitů</li>
+        <li><b>Oznámení</b> — e-mailem i push do prohlížeče</li>
+        <li><b>Profil</b> — přezdívka, avatar, město pro osobní předání</li>
+      </ul>
+
+      <h4>Instalace jako aplikace</h4>
+      <p>PokéTrade se dá nainstalovat na plochu telefonu i počítače.
+         V prohlížeči hledej v adresním řádku ikonu instalace.
+         Funguje pak i bez připojení pro už načtená alba.</p>
+      <div class="pr-actions">
+        <a href="nastaveni.html">⚙️ Otevřít nastavení</a>
+        <a class="ghost" href="profile.html">Upravit profil</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>🛠 Něco nefunguje — řešení potíží</summary>
+    <div class="pr-body">
+      <h4>AI kartu nepozná</h4>
+      <ul>
+        <li>Zkontroluj světlo a odlesky, přefoť ji</li>
+        <li>Musí být vidět číslo v dolním rohu</li>
+        <li>U cizojazyčných karet zkus zadat jméno anglicky</li>
+        <li>Nepomohlo? Najdi kartu ručně v <a class="fx" href="pokedb.html">PokéDB</a> a přiřaď ji</li>
+      </ul>
+
+      <h4>Vyčerpaný denní limit</h4>
+      <p>Počkej do dalšího dne, nebo si v Nastavení přidej vlastní AI klíč.</p>
+
+      <h4>Stránka se tváří postaru</h4>
+      <p>Zkus <code>Ctrl+Shift+R</code> (na Macu <code>Cmd+Shift+R</code>).
+         Prohlížeč si drží starou verzi v paměti.</p>
+
+      <h4>Fotky z mobilu nedorazily</h4>
+      <ul>
+        <li>Musíš být na mobilu přihlášený stejným účtem</li>
+        <li>Zkontroluj sekci <a class="fx" href="queue.html">Čeká na zařazení</a> — nejspíš čekají tam</li>
+        <li>Při slabém signálu může nahrávání chvíli trvat</li>
+      </ul>
+
+      <h4>Zapomenuté heslo</h4>
+      <p>Na přihlašovací stránce je odkaz na obnovu. Přijde ti e-mail s odkazem
+         na nastavení nového hesla.</p>
+      <div class="pr-actions">
+        <a href="queue.html">📥 Zkontrolovat frontu</a>
+        <a class="ghost" href="pokedb.html">Najít kartu ručně</a>
+        <a class="ghost" href="reset-password.html">Obnovit heslo</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>🔒 Bezpečnost a soukromí</summary>
+    <div class="pr-body">
+      <h4>Co o tobě víme</h4>
+      <p>E-mail, přezdívku a to, co si sám nahraješ. Fotky karet vidíš jen ty,
+         dokud album nesdílíš nebo kartu nenabídneš v obchodě.</p>
+
+      <h4>Na co si dát pozor při obchodování</h4>
+      <ul>
+        <li>Domlouvej se v chatu v aplikaci — máš pak záznam</li>
+        <li>U dražších karet zvaž dobírku nebo osobní předání</li>
+        <li>Vyfoť balení před odesláním</li>
+        <li>Nesdílej svoje heslo ani přihlašovací údaje</li>
+      </ul>
+
+      <div class="pr-warn">
+        <b>Podezřelé chování nahlas.</b> Když se ti něco nezdá — někdo tlačí na platbu
+        předem mimo aplikaci, nabízí cenu příliš dobrou na to, aby byla pravda —
+        napiš nám dřív, než pošleš peníze.
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <details class="pr-sec">
+    <summary>✉️ Kontakt a nápady</summary>
+    <div class="pr-body">
+      <p>Na profilu je vpravo dole tlačítko <a class="fx" href="profile.html">zpětné vazby</a> — napiš, co ti nefunguje
+         nebo co bys chtěl přidat. Čteme všechno.</p>
+
+      <h4>Než napíšeš, hodí se přiložit</h4>
+      <ul>
+        <li>Na které stránce se to stalo</li>
+        <li>Co jsi dělal, když to nastalo</li>
+        <li>Snímek obrazovky, když jde o něco vizuálního</li>
+        <li>Jestli jsi na telefonu, nebo na počítači</li>
+      </ul>
+
+      <p>PokéTrade dělá jeden člověk ve volném čase. Když něco nefunguje,
+         není to ignorace — jen to chvíli trvá.</p>
+      <div class="pr-actions">
+        <a href="profile.html">✉️ Napsat zpětnou vazbu</a>
+        <a class="ghost" href="privacy.html">Zásady soukromí</a>
+      </div>
+    </div>
+  </details>
+
+  </div>
+
+  <div class="pr-empty" id="prEmpty" style="display:none">
+    Na <b id="prTerm"></b> se nic nenašlo.<br>
+    Zkus jiné slovo, nebo napiš přes zpětnou vazbu — doplníme to.
+  </div>
+
+</div>
+
+<script>
+/* ── Vyhledávání v příručce ────────────────────────────────────
+   Filtruje sekce podle textu, zvýrazňuje nalezená slova a
+   automaticky rozbaluje to, co odpovídá. Diakritika se ignoruje,
+   ať „skenovani" najde „skenování". */
+const _sekce = [...document.querySelectorAll('.pr-sec')];
+const _puvodni = _sekce.map(s => s.innerHTML);
+
+function _bezDiakritiky(t) {
+  return (t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function _zvyrazni(el, dotaz) {
+  // Text uvnitř odkazů přeskakujeme — jinak by se rozpadly na <span>
+  // a přišly by o kliknutelnost.
+  const chodec = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+    acceptNode: n => n.parentElement && n.parentElement.closest('a')
+      ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+  });
+  const uzly = [];
+  while (chodec.nextNode()) uzly.push(chodec.currentNode);
+  for (const uzel of uzly) {
+    const text = uzel.nodeValue;
+    const idx  = _bezDiakritiky(text).indexOf(dotaz);
+    if (idx === -1) continue;
+    const span = document.createElement('span');
+    span.append(
+      text.slice(0, idx),
+      Object.assign(document.createElement('mark'), { textContent: text.slice(idx, idx + dotaz.length) }),
+      text.slice(idx + dotaz.length)
+    );
+    uzel.parentNode.replaceChild(span, uzel);
+  }
+}
+
+function prFilter(dotaz) {
+  const d = _bezDiakritiky(dotaz).trim();
+  const hits = document.getElementById('prHits');
+  const empty = document.getElementById('prEmpty');
+
+  // Obnov původní obsah (kvůli předchozímu zvýraznění)
+  _sekce.forEach((s, i) => { s.innerHTML = _puvodni[i]; });
+
+  if (d.length < 2) {
+    _sekce.forEach((s, i) => { s.style.display = ''; s.open = i === 0; });
+    hits.textContent = '';
+    empty.style.display = 'none';
+    return;
+  }
+
+  let nalezeno = 0;
+  _sekce.forEach(s => {
+    const shoda = _bezDiakritiky(s.textContent).includes(d);
+    s.style.display = shoda ? '' : 'none';
+    s.open = shoda;
+    if (shoda) { nalezeno++; _zvyrazni(s, d); }
+  });
+
+  hits.textContent = nalezeno
+    ? `Nalezeno v ${nalezeno} ${nalezeno === 1 ? 'sekci' : nalezeno < 5 ? 'sekcích' : 'sekcích'}`
+    : '';
+  document.getElementById('prTerm').textContent = dotaz;
+  empty.style.display = nalezeno ? 'none' : '';
+}
+
+function prFilterFrom(vyraz) {
+  const inp = document.getElementById('prSearch');
+  inp.value = vyraz;
+  prFilter(vyraz);
+  inp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Odkaz s ?q=… rovnou vyhledá (pro odkazování z jiných stránek)
+(function () {
+  const q = new URLSearchParams(location.search).get('q');
+  if (q) { document.getElementById('prSearch').value = q; prFilter(q); }
+})();
+</script>
+
+</body>
+</html>
